@@ -21,39 +21,26 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.PacketOut;
 import ua.nanit.limbo.protocol.registry.Version;
-import ua.nanit.limbo.server.LimboServer;
+import ua.nanit.limbo.util.ComponentUtils;
+
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class PacketStatusResponse implements PacketOut {
 
-    private static final String TEMPLATE = "{ \"version\": { \"name\": \"%s\", \"protocol\": %d }, \"players\": { \"max\": %d, \"online\": %d, \"sample\": [] }, \"description\": %s }";
-
-    private LimboServer server;
+    private Response response;
 
     @Override
     public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
-        int protocol;
-        int staticProtocol = server.getConfig().getPingData().getProtocol();
-
-        if (staticProtocol > 0) {
-            protocol = staticProtocol;
-        } else {
-            protocol = server.getConfig().getInfoForwarding().isNone()
-                    ? version.getProtocolNumber()
-                    : Version.getMax().getProtocolNumber();
-        }
-
-        String ver = server.getConfig().getPingData().getVersion();
-        String desc = server.getConfig().getPingData().getDescription();
-
-        msg.writeString(getResponseJson(ver, protocol,
-                server.getConfig().getMaxPlayers(),
-                server.getConnections().getCount(), desc));
+        GsonComponentSerializer gsonComponentSerializer = ComponentUtils.getJsonChatSerializer(version);
+        msg.writeString(gsonComponentSerializer.serializer().toJson(this.response));
     }
 
     @Override
@@ -61,12 +48,36 @@ public class PacketStatusResponse implements PacketOut {
         return getClass().getSimpleName();
     }
 
-    @NonNull
-    private String getResponseJson(@NonNull String version,
-                                   int protocol,
-                                   int maxPlayers,
-                                   int online,
-                                   @NonNull String description) {
-        return String.format(TEMPLATE, version, protocol, maxPlayers, online, description);
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Response {
+        private Protocol version;
+        private Players players;
+        private Component description;
+
+        @Data
+        @AllArgsConstructor
+        public static class Protocol {
+            private String name;
+            private int protocol;
+        }
+
+        @Data
+        @AllArgsConstructor
+        public static class Players {
+            private int max;
+            private int online;
+            private PlayerInfo[] sample;
+        }
+
+        @Data
+        @AllArgsConstructor
+        public static class PlayerInfo {
+            private String name;
+            private UUID uniqueId;
+        }
+
     }
+
 }

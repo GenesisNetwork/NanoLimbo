@@ -18,31 +18,13 @@
 package ua.nanit.limbo.server.data;
 
 import lombok.Data;
-import org.checkerframework.checker.nullness.qual.Nullable;
-import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.serialize.TypeSerializer;
-import ua.nanit.limbo.util.Colors;
-
-import java.lang.reflect.Type;
+import net.kyori.adventure.text.Component;
 
 @Data
 public class PingData {
 
-    private String version;
-    private String description;
+    private Component version;
+    private Component description;
     private int protocol;
 
-    public static class Serializer implements TypeSerializer<PingData> {
-        @Override
-        public PingData deserialize(Type type, ConfigurationNode node) {
-            PingData pingData = new PingData();
-            pingData.setDescription(Colors.of(node.node("description").getString("")));
-            pingData.setVersion(Colors.of(node.node("version").getString("")));
-            pingData.setProtocol(node.node("protocol").getInt(-1));
-            return pingData;
-        }
-
-        @Override
-        public void serialize(Type type, @Nullable PingData obj, ConfigurationNode node) {}
-    }
 }

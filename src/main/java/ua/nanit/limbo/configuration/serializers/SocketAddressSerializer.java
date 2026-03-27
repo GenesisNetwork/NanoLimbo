@@ -15,9 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ua.nanit.limbo.configuration;
+package ua.nanit.limbo.configuration.serializers;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 
@@ -43,6 +42,6 @@ public class SocketAddressSerializer implements TypeSerializer<SocketAddress> {
     }
 
     @Override
-    public void serialize(Type type, @Nullable SocketAddress obj, ConfigurationNode node) {
+    public void serialize(Type type, SocketAddress obj, ConfigurationNode node) {
     }
 }

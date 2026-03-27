@@ -18,37 +18,15 @@
 package ua.nanit.limbo.server.data;
 
 import lombok.Data;
-import org.checkerframework.checker.nullness.qual.Nullable;
-import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.serialize.TypeSerializer;
-import ua.nanit.limbo.protocol.NbtMessage;
-import ua.nanit.limbo.util.Colors;
-import ua.nanit.limbo.util.NbtMessageUtil;
-
-import java.lang.reflect.Type;
+import net.kyori.adventure.text.Component;
 
 @Data
 public class Title {
 
-    private NbtMessage title;
-    private NbtMessage subtitle;
+    private Component title;
+    private Component subtitle;
     private int fadeIn;
     private int stay;
     private int fadeOut;
 
-    public static class Serializer implements TypeSerializer<Title> {
-        @Override
-        public Title deserialize(Type type, ConfigurationNode node) {
-            Title title = new Title();
-            title.setTitle(NbtMessageUtil.create(Colors.of(node.node("title").getString(""))));
-            title.setSubtitle(NbtMessageUtil.create(Colors.of(node.node("subtitle").getString(""))));
-            title.setFadeIn(node.node("fadeIn").getInt(10));
-            title.setStay(node.node("stay").getInt(100));
-            title.setFadeOut(node.node("fadeOut").getInt(10));
-            return title;
-        }
-
-        @Override
-        public void serialize(Type type, @Nullable Title obj, ConfigurationNode node) {}
-    }
 }

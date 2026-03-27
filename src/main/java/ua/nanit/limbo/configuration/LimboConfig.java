@@ -20,15 +20,15 @@ package ua.nanit.limbo.configuration;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.text.Component;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
-import ua.nanit.limbo.server.data.BossBar;
-import ua.nanit.limbo.server.data.InfoForwarding;
-import ua.nanit.limbo.server.data.PingData;
-import ua.nanit.limbo.server.data.Title;
-import ua.nanit.limbo.util.Colors;
+import ua.nanit.limbo.configuration.serializers.*;
+import ua.nanit.limbo.server.TransportType;
+import ua.nanit.limbo.server.data.*;
+import ua.nanit.limbo.world.DimensionType;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -49,7 +49,7 @@ public final class LimboConfig {
     private int maxPlayers;
     private PingData pingData;
 
-    private String dimensionType;
+    private DimensionType dimensionType;
     private int gameMode;
     private boolean secureProfile;
 
@@ -60,20 +60,20 @@ public final class LimboConfig {
     private boolean usePlayerList;
     private boolean useHeaderAndFooter;
 
-    private String brandName;
-    private String joinMessage;
+    private Component brandName;
+    private Component joinMessage;
     private BossBar bossBar;
     private Title title;
 
     private String playerListUsername;
-    private String playerListHeader;
-    private String playerListFooter;
+    private Component playerListHeader;
+    private Component playerListFooter;
 
     private InfoForwarding infoForwarding;
     private long readTimeout;
     private int debugLevel;
 
-    private String transportType;
+    private TransportType transportType;
     private int bossGroupSize;
     private int workerGroupSize;
 
@@ -93,17 +93,11 @@ public final class LimboConfig {
         ConfigurationNode conf = loader.load();
 
         address = conf.node("bind").get(SocketAddress.class);
-        maxPlayers = conf.node("maxPlayers").getInt();
+        maxPlayers = conf.node("maxPlayers").getInt(100);
         pingData = conf.node("ping").get(PingData.class);
-        dimensionType = conf.node("dimension").getString("the_end");
-        if (dimensionType.equalsIgnoreCase("nether")) {
-            dimensionType = "the_nether";
-        }
-        if (dimensionType.equalsIgnoreCase("end")) {
-            dimensionType = "the_end";
-        }
-        gameMode = conf.node("gameMode").getInt();
-        secureProfile = conf.node("secureProfile").getBoolean();
+        dimensionType = conf.node("dimension").get(DimensionType.class, DimensionType.THE_END);
+        gameMode = conf.node("gameMode").getInt(3);
+        secureProfile = conf.node("secureProfile").getBoolean(false);
         useBrandName = conf.node("brandName", "enable").getBoolean();
         useJoinMessage = conf.node("joinMessage", "enable").getBoolean();
         useBossBar = conf.node("bossBar", "enable").getBoolean();
@@ -112,28 +106,32 @@ public final class LimboConfig {
         playerListUsername = conf.node("playerList", "username").getString();
         useHeaderAndFooter = conf.node("headerAndFooter", "enable").getBoolean();
 
-        if (useBrandName)
-            brandName = conf.node("brandName", "content").getString();
+        if (useBrandName) {
+            brandName = conf.node("brandName", "content").get(Component.class, Component.empty());
+        }
 
-        if (useJoinMessage)
-            joinMessage = Colors.of(conf.node("joinMessage", "text").getString(""));
+        if (useJoinMessage) {
+            joinMessage = conf.node("joinMessage", "text").get(Component.class, Component.empty());
+        }
 
-        if (useBossBar)
+        if (useBossBar) {
             bossBar = conf.node("bossBar").get(BossBar.class);
+        }
 
-        if (useTitle)
+        if (useTitle) {
             title = conf.node("title").get(Title.class);
+        }
 
         if (useHeaderAndFooter) {
-            playerListHeader = Colors.of(conf.node("headerAndFooter", "header").getString());
-            playerListFooter = Colors.of(conf.node("headerAndFooter", "footer").getString());
+            playerListHeader = conf.node("headerAndFooter", "header").get(Component.class, Component.empty());
+            playerListFooter = conf.node("headerAndFooter", "footer").get(Component.class, Component.empty());
         }
 
         infoForwarding = conf.node("infoForwarding").get(InfoForwarding.class);
-        readTimeout = conf.node("readTimeout").getLong();
-        debugLevel = conf.node("debugLevel").getInt();
+        readTimeout = conf.node("readTimeout").getLong(30000);
+        debugLevel = conf.node("debugLevel").getInt(2);
 
-        transportType = conf.node("netty", "transportType").getString("epoll");
+        transportType = conf.node("netty", "transportType").get(TransportType.class, TransportType.EPOLL);
         bossGroupSize = conf.node("netty", "threads", "bossGroup").getInt(1);
         workerGroupSize = conf.node("netty", "threads", "workerGroup").getInt(4);
 
@@ -166,10 +164,14 @@ public final class LimboConfig {
     private TypeSerializerCollection getSerializers() {
         return TypeSerializerCollection.builder()
                 .register(SocketAddress.class, new SocketAddressSerializer())
-                .register(InfoForwarding.class, new InfoForwarding.Serializer())
-                .register(PingData.class, new PingData.Serializer())
-                .register(BossBar.class, new BossBar.Serializer())
-                .register(Title.class, new Title.Serializer())
+                .register(Component.class, new ComponentSerializer())
+                .register(TransportType.class, new TransportTypeSerializer())
+                .register(DimensionType.class, new DimensionTypeSerializer())
+                .register(NamespacedKey.class, new NamespacedKeySerializer())
+                .register(InfoForwarding.class, new InfoForwardingSerializer())
+                .register(PingData.class, new PingDataSerializer())
+                .register(BossBar.class, new BossBarSerializer())
+                .register(Title.class, new TitleSerializer())
                 .build();
     }
 }

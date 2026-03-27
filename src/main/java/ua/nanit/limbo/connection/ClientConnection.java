@@ -17,7 +17,6 @@
 
 package ua.nanit.limbo.connection;
 
-import com.google.gson.*;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -25,26 +24,25 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
 import ua.nanit.limbo.connection.pipeline.PacketDecoder;
 import ua.nanit.limbo.connection.pipeline.PacketEncoder;
-import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.Packet;
 import ua.nanit.limbo.protocol.PacketSnapshot;
-import ua.nanit.limbo.protocol.packets.login.PacketDisconnect;
+import ua.nanit.limbo.protocol.packets.login.PacketLoginDisconnect;
+import ua.nanit.limbo.protocol.packets.play.PacketDisconnect;
 import ua.nanit.limbo.protocol.packets.play.PacketKeepAlive;
 import ua.nanit.limbo.protocol.registry.State;
 import ua.nanit.limbo.protocol.registry.Version;
 import ua.nanit.limbo.server.LimboServer;
 import ua.nanit.limbo.server.Log;
-import ua.nanit.limbo.util.UuidUtil;
+import ua.nanit.limbo.util.ComponentUtils;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.security.InvalidKeyException;
-import java.security.MessageDigest;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -79,12 +77,12 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
         this.gameProfile = new GameProfile();
     }
 
-    @NonNull
+    @Nullable
     public UUID getUuid() {
         return gameProfile.getUuid();
     }
 
-    @NonNull
+    @Nullable
     public String getUsername() {
         return gameProfile.getUsername();
     }
@@ -119,7 +117,7 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
 
     public void fireLoginSuccess() {
         if (server.getConfig().getInfoForwarding().isModern() && velocityLoginMessageId == -1) {
-            disconnectLogin("You need to connect with Velocity");
+            disconnect(Component.text("You need to connect with Velocity", NamedTextColor.RED));
             return;
         }
 
@@ -149,35 +147,42 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
                 writePacket(PacketSnapshots.PACKET_PLAYER_POS_AND_LOOK);
             }
 
-            if (clientVersion.moreOrEqual(Version.V1_19_3))
+            if (clientVersion.moreOrEqual(Version.V1_19_3)) {
                 writePacket(PacketSnapshots.PACKET_SPAWN_POSITION);
+            }
 
-            if (server.getConfig().isUsePlayerList() || clientVersion.equals(Version.V1_16_4))
+            if (server.getConfig().isUsePlayerList() || clientVersion.equals(Version.V1_16_4)) {
                 writePacket(PacketSnapshots.PACKET_PLAYER_INFO);
+            }
 
             if (clientVersion.moreOrEqual(Version.V1_13)) {
                 writePacket(PacketSnapshots.PACKET_DECLARE_COMMANDS);
 
-                if (PacketSnapshots.PACKET_PLUGIN_MESSAGE != null)
+                if (PacketSnapshots.PACKET_PLUGIN_MESSAGE != null) {
                     writePacket(PacketSnapshots.PACKET_PLUGIN_MESSAGE);
+                }
             }
 
-            if (PacketSnapshots.PACKET_BOSS_BAR != null && clientVersion.moreOrEqual(Version.V1_9))
+            if (PacketSnapshots.PACKET_BOSS_BAR != null && clientVersion.moreOrEqual(Version.V1_9)) {
                 writePacket(PacketSnapshots.PACKET_BOSS_BAR);
+            }
 
-            if (PacketSnapshots.PACKET_JOIN_MESSAGE != null)
+            if (PacketSnapshots.PACKET_JOIN_MESSAGE != null) {
                 writePacket(PacketSnapshots.PACKET_JOIN_MESSAGE);
+            }
 
-            if (PacketSnapshots.PACKET_TITLE_TITLE != null && clientVersion.moreOrEqual(Version.V1_8))
+            if (PacketSnapshots.PACKET_TITLE_TITLE != null && clientVersion.moreOrEqual(Version.V1_8)) {
                 writeTitle();
+            }
 
-            if (PacketSnapshots.PACKET_HEADER_AND_FOOTER != null && clientVersion.moreOrEqual(Version.V1_8))
+            if (PacketSnapshots.PACKET_HEADER_AND_FOOTER != null && clientVersion.moreOrEqual(Version.V1_8)) {
                 writePacket(PacketSnapshots.PACKET_HEADER_AND_FOOTER);
+            }
 
             if (clientVersion.moreOrEqual(Version.V1_20_3)) {
                 writePacket(PacketSnapshots.PACKET_START_WAITING_CHUNKS);
 
-                writePackets(PacketSnapshots.PACKETS_EMPTY_CHUNKS);
+                writePackets(PacketSnapshots.PACKETS_CHUNKS);
             }
 
             sendKeepAlive();
@@ -208,25 +213,9 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
     }
 
     public void onKnownPacksReceived() {
-        // TODO Simplify...
-        if (clientVersion.moreOrEqual(Version.V1_21_11)) {
-            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_11);
-        } else if (clientVersion.moreOrEqual(Version.V1_21_9)) {
-            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_9);
-        } else if (clientVersion.moreOrEqual(Version.V1_21_7)) {
-            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_7);
-        } else if (clientVersion.moreOrEqual(Version.V1_21_6)) {
-            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_6);
-        } else if (clientVersion.moreOrEqual(Version.V1_21_5)) {
-            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_5);
-        } else if (clientVersion.moreOrEqual(Version.V1_21_4)) {
-            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_4);
-        } else if (clientVersion.moreOrEqual(Version.V1_21_2)) {
-            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_2);
-        } else if (clientVersion.moreOrEqual(Version.V1_21)) {
-            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21);
-        } else if (clientVersion.moreOrEqual(Version.V1_20_5)) {
-            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_20_5);
+        List<PacketSnapshot> registry = PacketSnapshots.getPacketsRegistryData(this.clientVersion);
+        if (registry != null) {
+            writePackets(registry);
         }
 
         writePacket(PacketSnapshots.PACKET_UPDATE_TAGS);
@@ -240,12 +229,31 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
         }
     }
 
-    public void disconnectLogin(@NonNull String reason) {
-        if (isConnected() && state == State.LOGIN) {
-            PacketDisconnect disconnect = new PacketDisconnect();
-            disconnect.setReason(reason);
-            sendPacketAndClose(disconnect);
+    public void disconnect(@NonNull Component reason) {
+        if (!isConnected()) {
+            return;
         }
+
+        String name = getUsername();
+        Log.debug("%s kicked: %s", (name != null ? name : this.address), ComponentUtils.toPlainString(reason));
+
+        if (!(this.state == State.LOGIN || this.state == State.CONFIGURATION || this.state == State.PLAY)) {
+            this.channel.close();
+            return;
+        }
+
+        Packet packet;
+        if (this.state == State.LOGIN) {
+            PacketLoginDisconnect packetLoginDisconnect = new PacketLoginDisconnect();
+            packetLoginDisconnect.setReason(reason);
+            packet = packetLoginDisconnect;
+        } else {
+            PacketDisconnect packetDisconnect = new PacketDisconnect();
+            packetDisconnect.setReason(reason);
+            packet = packetDisconnect;
+        }
+
+        sendPacketAndClose(packet);
     }
 
     public void writeTitle() {
@@ -310,76 +318,4 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
         this.address = new InetSocketAddress(host, ((InetSocketAddress) this.address).getPort());
     }
 
-    public boolean checkBungeeGuardHandshake(@NonNull String handshake) {
-        String[] split = handshake.split("\00");
-
-        if (split.length != 4) {
-            return false;
-        }
-
-        String socketAddressHostname = split[1];
-        UUID uuid = UuidUtil.fromString(split[2]);
-
-        String token = null;
-
-        try {
-            JsonElement rootElement = JsonParser.parseString(split[3]);
-            if (!rootElement.isJsonArray()) {
-                return false;
-            }
-
-            JsonArray jsonArray = rootElement.getAsJsonArray();
-            for (JsonElement jsonElement : jsonArray) {
-                if (jsonElement.isJsonObject()) {
-                    JsonObject jsonObject = jsonElement.getAsJsonObject();
-
-                    JsonElement nameElement = jsonObject.get("name");
-                    if (nameElement != null && nameElement.isJsonPrimitive()) {
-                        if (nameElement.getAsString().equals("bungeeguard-token")) {
-                            JsonElement valueElement = jsonObject.get("value");
-                            if (valueElement != null && valueElement.isJsonPrimitive()) {
-                                token = valueElement.getAsString();
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (JsonParseException e) {
-            return false;
-        }
-
-        if (!server.getConfig().getInfoForwarding().hasToken(token)) {
-            return false;
-        }
-
-        setAddress(socketAddressHostname);
-        gameProfile.setUuid(uuid);
-
-        Log.debug("Successfully verified BungeeGuard token");
-
-        return true;
-    }
-
-    public boolean checkVelocityKeyIntegrity(@NonNull ByteMessage buf) {
-        byte[] signature = new byte[32];
-        buf.readBytes(signature);
-        byte[] data = new byte[buf.readableBytes()];
-        buf.getBytes(buf.readerIndex(), data);
-        try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(server.getConfig().getInfoForwarding().getSecretKey(), "HmacSHA256"));
-            byte[] mySignature = mac.doFinal(data);
-            if (!MessageDigest.isEqual(signature, mySignature)) {
-                return false;
-            }
-        } catch (InvalidKeyException | java.security.NoSuchAlgorithmException e) {
-            throw new AssertionError(e);
-        }
-        int version = buf.readVarInt();
-        if (version != 1) {
-            throw new IllegalStateException("Unsupported forwarding version " + version + ", wanted " + '\001');
-        }
-        return true;
-    }
 }

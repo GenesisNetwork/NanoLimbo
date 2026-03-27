@@ -44,7 +44,7 @@ public class PacketBossBar implements PacketOut {
     public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
         msg.writeUuid(this.uuid);
         msg.writeVarInt(0); // Create bossbar
-        msg.writeNbtMessage(this.bossBar.getText(), version);
+        msg.writeComponent(this.bossBar.getText(), version);
         msg.writeFloat(this.bossBar.getHealth());
         msg.writeVarInt(this.bossBar.getColor().getIndex());
         msg.writeVarInt(this.bossBar.getDivision().getIndex());

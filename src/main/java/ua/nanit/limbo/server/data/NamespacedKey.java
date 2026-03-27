@@ -18,41 +18,28 @@
 package ua.nanit.limbo.server.data;
 
 import lombok.Data;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import lombok.NonNull;
 
-import java.util.List;
+import java.util.Locale;
 
 @Data
-public class InfoForwarding {
+public class NamespacedKey {
 
-    private Type type;
-    private byte[] secretKey;
-    private List<String> tokens;
+    private static final String MINECRAFT_NAMESPACE = "minecraft";
 
-    public boolean hasToken(@Nullable String token) {
-        return tokens != null && token != null && tokens.contains(token);
+    private String namespace;
+    private String key;
+
+    @NonNull
+    public static NamespacedKey minecraft(@NonNull String key) {
+        NamespacedKey namespacedKey = new NamespacedKey();
+        namespacedKey.setNamespace(MINECRAFT_NAMESPACE);
+        namespacedKey.setKey(key.toLowerCase(Locale.ROOT));
+        return namespacedKey;
     }
 
-    public boolean isNone() {
-        return type == Type.NONE;
-    }
-
-    public boolean isLegacy() {
-        return type == Type.LEGACY;
-    }
-
-    public boolean isModern() {
-        return type == Type.MODERN;
-    }
-
-    public boolean isBungeeGuard() {
-        return type == Type.BUNGEE_GUARD;
-    }
-
-    public enum Type {
-        NONE,
-        LEGACY,
-        MODERN,
-        BUNGEE_GUARD
+    @Override
+    public String toString() {
+        return this.namespace + ":" + this.key;
     }
 }

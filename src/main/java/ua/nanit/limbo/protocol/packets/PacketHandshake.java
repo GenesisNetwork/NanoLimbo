@@ -24,7 +24,6 @@ import lombok.NonNull;
 import ua.nanit.limbo.connection.ClientConnection;
 import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.PacketIn;
-import ua.nanit.limbo.protocol.registry.State;
 import ua.nanit.limbo.protocol.registry.Version;
 import ua.nanit.limbo.server.LimboServer;
 
@@ -36,7 +35,7 @@ public class PacketHandshake implements PacketIn {
     private Version version;
     private String host;
     private int port;
-    private State nextState;
+    private Intent intent;
 
     @Override
     public void decode(@NonNull ByteMessage msg, @NonNull Version version) {
@@ -45,10 +44,13 @@ public class PacketHandshake implements PacketIn {
         } catch (IllegalArgumentException e) {
             this.version = Version.UNDEFINED;
         }
-
         this.host = msg.readString();
         this.port = msg.readUnsignedShort();
-        this.nextState = State.getById(msg.readVarInt());
+        try {
+            this.intent = Intent.values()[msg.readVarInt()];
+        } catch (Exception e) {
+            this.intent = Intent.UNDEFINED;
+        }
     }
 
     @Override
@@ -59,5 +61,12 @@ public class PacketHandshake implements PacketIn {
     @Override
     public String toString() {
         return getClass().getSimpleName();
+    }
+
+    public enum Intent {
+        UNDEFINED,
+        STATUS,
+        LOGIN,
+        TRANSFER
     }
 }

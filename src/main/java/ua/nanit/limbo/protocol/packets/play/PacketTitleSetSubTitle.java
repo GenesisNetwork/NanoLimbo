@@ -21,8 +21,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import net.kyori.adventure.text.Component;
 import ua.nanit.limbo.protocol.ByteMessage;
-import ua.nanit.limbo.protocol.NbtMessage;
 import ua.nanit.limbo.protocol.PacketOut;
 import ua.nanit.limbo.protocol.registry.Version;
 
@@ -31,11 +31,11 @@ import ua.nanit.limbo.protocol.registry.Version;
 @NoArgsConstructor
 public class PacketTitleSetSubTitle implements PacketOut {
 
-    private NbtMessage subtitle;
+    private Component subtitle;
 
     @Override
     public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
-        msg.writeNbtMessage(subtitle, version);
+        msg.writeComponent(this.subtitle, version);
     }
 
     @Override

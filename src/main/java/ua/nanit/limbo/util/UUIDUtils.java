@@ -17,20 +17,28 @@
 
 package ua.nanit.limbo.util;
 
+import lombok.NonNull;
 import lombok.experimental.UtilityClass;
-import org.checkerframework.checker.nullness.qual.Nullable;
+
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 @UtilityClass
-public class Colors {
+public class UUIDUtils {
 
-    private static final char CHAR_FROM = '&';
-    private static final char CHAR_TO = '§';
+    @NonNull
+    public static UUID getOfflineModeUuid(@NonNull String username) {
+        return UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes(StandardCharsets.UTF_8));
+    }
 
-    @Nullable
-    public static String of(@Nullable String text) {
-        if (text == null) {
-            return null;
+    @NonNull
+    public static UUID fromString(@NonNull String str) {
+        if (str.contains("-")) {
+            return UUID.fromString(str);
         }
-        return text.replace(CHAR_FROM, CHAR_TO);
+        return UUID.fromString(str.replaceFirst(
+                "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)",
+                "$1-$2-$3-$4-$5"
+        ));
     }
 }

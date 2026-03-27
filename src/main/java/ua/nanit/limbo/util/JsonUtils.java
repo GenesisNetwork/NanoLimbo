@@ -15,16 +15,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ua.nanit.limbo.protocol;
+package ua.nanit.limbo.util;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import net.kyori.adventure.nbt.CompoundBinaryTag;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.TypeAdapter;
+import lombok.experimental.UtilityClass;
 
-@AllArgsConstructor
-@Data
-public class NbtMessage {
+@UtilityClass
+public class JsonUtils {
 
-    private String json;
-    private CompoundBinaryTag tag;
+    private static final TypeAdapter<JsonElement> STRICT_ADAPTER = new Gson().getAdapter(JsonElement.class);
+
+    public static boolean isValidJson(String json) {
+        try {
+            STRICT_ADAPTER.fromJson(json);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
 }

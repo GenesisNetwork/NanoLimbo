@@ -25,25 +25,17 @@ import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.MetadataWriter;
 import ua.nanit.limbo.protocol.PacketOut;
 import ua.nanit.limbo.protocol.registry.Version;
-import ua.nanit.limbo.world.DimensionRegistry;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class PacketRegistryData implements PacketOut {
 
-    private DimensionRegistry dimensionRegistry;
     private MetadataWriter metadataWriter;
 
     @Override
     public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
-        if (this.metadataWriter != null) {
-            if (version.moreOrEqual(Version.V1_20_5)) {
-                this.metadataWriter.writeData(msg, version);
-                return;
-            }
-        }
-        msg.writeCompoundTag(this.dimensionRegistry.getCodec_1_20(), version);
+        this.metadataWriter.writeData(msg, version);
     }
 
     @Override

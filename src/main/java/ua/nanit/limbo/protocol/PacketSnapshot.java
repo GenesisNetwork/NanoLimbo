@@ -23,6 +23,7 @@ import ua.nanit.limbo.protocol.registry.Version;
 
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -43,9 +44,14 @@ public class PacketSnapshot implements PacketOut {
     }
 
     public void encode(@NonNull Function<Version, PacketOut> packetComputeFunction) {
+        encode(packetComputeFunction, List.of(Version.values()));
+    }
+
+    public void encode(@NonNull Function<Version, PacketOut> packetComputeFunction,
+                       @NonNull List<Version> versions) {
         Map<Integer, Version> hashes = new HashMap<>();
 
-        for (Version version : Version.values()) {
+        for (Version version : versions) {
             if (version.equals(Version.UNDEFINED)) {
                 continue;
             }
@@ -89,6 +95,20 @@ public class PacketSnapshot implements PacketOut {
     @NonNull
     public static PacketSnapshot of(@NonNull PacketOut packet) {
         return of(packet.getClass(), version -> packet);
+    }
+
+    @NonNull
+    public static PacketSnapshot of(@NonNull PacketOut packet, Version version) {
+        return of(packet.getClass(), version2 -> packet, List.of(version));
+    }
+
+    @NonNull
+    public static PacketSnapshot of(@NonNull Class<? extends PacketOut> packetClazz,
+                                    @NonNull Function<Version, PacketOut> packetComputeFunction,
+                                    @NonNull List<Version> versions) {
+        PacketSnapshot snapshot = new PacketSnapshot(packetClazz);
+        snapshot.encode(packetComputeFunction, versions);
+        return snapshot;
     }
 
     @NonNull

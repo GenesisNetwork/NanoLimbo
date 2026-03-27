@@ -30,13 +30,36 @@ import ua.nanit.limbo.protocol.registry.Version;
 @NoArgsConstructor
 public class PacketPlayerAbilities implements PacketOut {
 
-    private int flags = 0x02;
+    private static final int FLAG_INVINCIBLE = 0x01;
+    private static final int FLAG_FLYING = 0x02;
+    private static final int FLAG_CAN_FLY = 0x04;
+    private static final int FLAG_CREATIVE = 0x08;
+
+    private boolean invincible;
+    private boolean canFly;
+    private boolean flying;
+    private boolean creative;
+
     private float flyingSpeed = 0.0F;
     private float fieldOfView = 0.1F;
 
     @Override
     public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
-        msg.writeByte(this.flags);
+        int flags = 0;
+        if (this.invincible) {
+            flags |= FLAG_INVINCIBLE;
+        }
+        if (this.canFly) {
+            flags |= FLAG_CAN_FLY;
+        }
+        if (this.flying) {
+            flags |= FLAG_FLYING;
+        }
+        if (this.creative) {
+            flags |= FLAG_CREATIVE;
+        }
+
+        msg.writeByte(flags);
         msg.writeFloat(this.flyingSpeed);
         msg.writeFloat(this.fieldOfView);
     }

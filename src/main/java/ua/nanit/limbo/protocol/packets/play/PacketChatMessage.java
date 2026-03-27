@@ -21,8 +21,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import net.kyori.adventure.text.Component;
 import ua.nanit.limbo.protocol.ByteMessage;
-import ua.nanit.limbo.protocol.NbtMessage;
 import ua.nanit.limbo.protocol.PacketOut;
 import ua.nanit.limbo.protocol.registry.Version;
 
@@ -33,13 +33,13 @@ import java.util.UUID;
 @NoArgsConstructor
 public class PacketChatMessage implements PacketOut {
 
-    private NbtMessage message;
+    private Component message;
     private PositionLegacy position;
     private UUID sender;
 
     @Override
     public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
-        msg.writeNbtMessage(this.message, version);
+        msg.writeComponent(this.message, version);
         if (version.moreOrEqual(Version.V1_19_1)) {
             msg.writeBoolean(this.position.index == PositionLegacy.ACTION_BAR.index);
         } else if (version.moreOrEqual(Version.V1_19)) {
@@ -48,8 +48,9 @@ public class PacketChatMessage implements PacketOut {
             msg.writeByte(this.position.index);
         }
 
-        if (version.moreOrEqual(Version.V1_16) && version.less(Version.V1_19))
+        if (version.moreOrEqual(Version.V1_16) && version.less(Version.V1_19)) {
             msg.writeUuid(this.sender);
+        }
     }
 
     @Override

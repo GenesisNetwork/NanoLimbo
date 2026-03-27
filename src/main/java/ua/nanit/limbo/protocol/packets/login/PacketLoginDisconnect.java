@@ -21,20 +21,24 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.PacketOut;
 import ua.nanit.limbo.protocol.registry.Version;
+import ua.nanit.limbo.util.ComponentUtils;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PacketDisconnect implements PacketOut {
+public class PacketLoginDisconnect implements PacketOut {
 
-    private String reason;
+    private Component reason;
 
     @Override
     public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
-        msg.writeString(String.format("{\"text\": \"%s\"}", reason));
+        GsonComponentSerializer gsonComponentSerializer = ComponentUtils.getJsonChatSerializer(version);
+        msg.writeString(gsonComponentSerializer.serialize(this.reason));
     }
 
     @Override

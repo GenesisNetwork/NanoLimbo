@@ -15,28 +15,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ua.nanit.limbo.util;
+package ua.nanit.limbo.protocol.packets.play;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import lombok.experimental.UtilityClass;
+import net.kyori.adventure.text.Component;
+import ua.nanit.limbo.protocol.ByteMessage;
+import ua.nanit.limbo.protocol.PacketOut;
+import ua.nanit.limbo.protocol.registry.Version;
 
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class PacketDisconnect implements PacketOut {
 
-@UtilityClass
-public class UuidUtil {
+    private Component reason;
 
-    @NonNull
-    public static UUID getOfflineModeUuid(@NonNull String username) {
-        return UUID.nameUUIDFromBytes(("OfflinePlayer:" + username)
-                .getBytes(StandardCharsets.UTF_8));
+    @Override
+    public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
+        msg.writeComponent(this.reason, version);
     }
 
-    @NonNull
-    public static UUID fromString(@NonNull String str) {
-        if (str.contains("-")) {
-            return UUID.fromString(str);
-        }
-        return UUID.fromString(str.replaceFirst("(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)", "$1-$2-$3-$4-$5"));
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
     }
 }

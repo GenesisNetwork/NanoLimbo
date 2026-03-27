@@ -24,26 +24,29 @@ import lombok.NonNull;
 import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.PacketOut;
 import ua.nanit.limbo.protocol.registry.Version;
+import ua.nanit.limbo.server.data.NamespacedKey;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class PacketSpawnPosition implements PacketOut {
 
-    private String dimensionName;
+    private NamespacedKey dimensionKey;
     private long x;
     private long y;
     private long z;
+    private float yaw;
+    private float pitch;
 
     @Override
     public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
         if (version.moreOrEqual(Version.V1_21_9)) {
-            msg.writeString(this.dimensionName);
+            msg.writeNamespacedKey(this.dimensionKey);
         }
         msg.writeLong(encodePosition(this.x, this.y, this.z));
-        msg.writeFloat(0);
+        msg.writeFloat(this.yaw);
         if (version.moreOrEqual(Version.V1_21_9)) {
-            msg.writeFloat(0);
+            msg.writeFloat(this.pitch);
         }
     }
 
